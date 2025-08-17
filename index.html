@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="style.css">
   <!-- Weather Icons CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+  <!-- Leaflet CSS for interactive map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
   <div class="app-container">
@@ -15,14 +17,12 @@
       <h1>Svenskt Väder</h1>
       <p class="subheading">Dagens och morgondagens prognos</p>
     </header>
-
     <main>
       <section class="search-container">
         <label for="city-search" class="sr-only">Sök ort</label>
         <input type="text" id="city-search" placeholder="Skriv en ort..." autocomplete="off">
         <ul id="suggestions" class="suggestions"></ul>
       </section>
-
       <section class="cards">
         <div id="today" class="weather-card">
           <div class="card-header">
@@ -38,7 +38,6 @@
             <p id="today-wind"></p>
           </div>
         </div>
-
         <div id="tomorrow" class="weather-card">
           <div class="card-header">
             <h3>Imorgon</h3>
@@ -54,13 +53,20 @@
           </div>
         </div>
       </section>
+      <!-- Map section placed under weather cards -->
+      <section id="map-section">
+        <div id="map"></div>
+        <button id="reset-view" class="reset-button" style="display: none;">Visa hela landet</button>
+      </section>
     </main>
-
     <footer class="footer">
       <p>Data från Open-Meteo</p>
     </footer>
   </div>
-
   <script src="script.js"></script>
+  <!-- Leaflet JS library -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Map integration logic -->
+  <script src="map.js"></script>
 </body>
 </html>
