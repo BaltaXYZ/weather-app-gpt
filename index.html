@@ -1,0 +1,66 @@
+<!-- version 7 -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Svenskt Väder</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Weather Icons CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <h1>Svenskt Väder</h1>
+      <p class="subheading">Dagens och morgondagens prognos</p>
+    </header>
+
+    <main>
+      <section class="search-container">
+        <label for="city-search" class="sr-only">Sök ort</label>
+        <input type="text" id="city-search" placeholder="Skriv en ort..." autocomplete="off">
+        <ul id="suggestions" class="suggestions"></ul>
+      </section>
+
+      <section class="cards">
+        <div id="today" class="weather-card">
+          <div class="card-header">
+            <h3>Idag</h3>
+            <span class="badge">Prognos</span>
+          </div>
+          <div class="card-body">
+            <div class="icon-row centered">
+              <i id="today-icon" class="weather-icon wi"></i>
+              <p class="big" id="today-temp"></p>
+            </div>
+            <p id="today-weather"></p>
+            <p id="today-wind"></p>
+          </div>
+        </div>
+
+        <div id="tomorrow" class="weather-card">
+          <div class="card-header">
+            <h3>Imorgon</h3>
+            <span class="badge">Prognos</span>
+          </div>
+          <div class="card-body">
+            <div class="icon-row centered">
+              <i id="tomorrow-icon" class="weather-icon wi"></i>
+              <p class="big" id="tomorrow-temp"></p>
+            </div>
+            <p id="tomorrow-weather"></p>
+            <p id="tomorrow-wind"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Data från Open-Meteo</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
