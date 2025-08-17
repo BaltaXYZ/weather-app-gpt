@@ -1,10 +1,11 @@
 // version 7
+
 const cityInput = document.getElementById("city-search");
 const suggestionsList = document.getElementById("suggestions");
 
 let debounceTimeout;
 
-// Autocomplete med Open-Meteo geocoding (oförändrad logik)
+// Autocomplete med Open-Meteo geokoding (oförändrad logik)
 cityInput.addEventListener("input", () => {
   const query = cityInput.value.trim();
   clearTimeout(debounceTimeout);
@@ -41,7 +42,12 @@ async function searchCities(query) {
         cityInput.value = city.name;
         suggestionsList.innerHTML = "";
         suggestionsList.style.display = "none";
-        fetchWeather(city.latitude, city.longitude);
+        // Om kartan är initierad använd selectLocation, annars hämta bara väder
+        if (typeof window.selectLocation === 'function') {
+          window.selectLocation(city.latitude, city.longitude, city.name, city.country);
+        } else {
+          fetchWeather(city.latitude, city.longitude);
+        }
       });
       suggestionsList.appendChild(li);
     });
