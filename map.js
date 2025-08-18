@@ -255,3 +255,5 @@ document.addEventListener('DOMContentLoaded', initMap);
 
 // Expose selectLocation globally so script.js can call it
 window.selectLocation = selectLocation;
+// Expose reverseGeocode globally so script.js can call it
+window.reverseGeocode = reverseGeocode;
