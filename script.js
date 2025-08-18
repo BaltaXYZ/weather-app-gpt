@@ -133,3 +133,193 @@ function renderWeather(data) {
   // Uppdatera gradientens bottenfärg
   document.documentElement.style.setProperty("--grad-bottom", `var(${tW.bg})`);
 }
+
+// Initiera autolokalisering vid sidladdning
+function initAutoLocate() {
+  // Kontrollera om vi nyligen cache: om vald plats finns i localStorage (<24h)
+  try {
+    const cached = JSON.parse(localStorage.getItem('autoLocateCache') || 'null');
+    if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+      // använd cache
+      const { lat, lon, displayName, country } = cached;
+      // uppdatera sökfält
+      const input = document.getElementById('city-search');
+      if (input && displayName) input.value = displayName;
+      if (typeof window.selectLocation === 'function') {
+        window.selectLocation(lat, lon, displayName, country);
+      } else {
+        fetchWeather(lat, lon);
+      }
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  // Försök med geolocation
+  const geoTimeout = 6000;
+  const options = { enableHighAccuracy: false, timeout: geoTimeout, maximumAge: 600000 };
+
+  function handlePosition(lat, lon) {
+    // Reverse-geokoda för att få platsnamn (använd global reverseGeocode om finns)
+    (async () => {
+      let displayName = null;
+      let country = null;
+      try {
+        if (typeof window.reverseGeocode === 'function') {
+          const loc = await window.reverseGeocode(lat, lon);
+          displayName = loc.displayName;
+          country = loc.country;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      // Om inget namn: hämta via Nominatim direkt
+      if (!displayName) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`, { headers: { 'accept-language': 'sv' } });
+          const data = await res.json();
+          if (data && data.address) {
+            const addr = data.address;
+            displayName = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state || null;
+            country = addr.country || null;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      // Uppdatera sökfält
+      const input = document.getElementById('city-search');
+      if (input && displayName) input.value = displayName;
+      // Spara cache
+      try {
+        localStorage.setItem('autoLocateCache', JSON.stringify({ lat, lon, displayName, country, timestamp: Date.now() }));
+      } catch (err) {
+        console.error(err);
+      }
+      // Välj plats
+      if (typeof window.selectLocation === 'function') {
+        window.selectLocation(lat, lon, displayName, country);
+      } else {
+        fetchWeather(lat, lon);
+      }
+    })();
+  }
+
+  function fallbackToIP() {
+    fetch('https://ipapi.co/json/')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && data.latitude && data.longitude) {
+          const lat = data.latitude;
+          const lon = data.longitude;
+          let displayName = data.city || null;
+          let country = data.country_name || null;
+          if (displayName) {
+            const input = document.getElementById('city-search');
+            if (input) input.value = displayName;
+          }
+          // Spara cache
+          try {
+            localStorage.setItem('autoLocateCache', JSON.stringify({ lat, lon, displayName, country, timestamp: Date.now() }));
+          } catch (err) {}
+          if (typeof window.selectLocation === 'function') {
+            window.selectLocation(lat, lon, displayName, country);
+          } else {
+            fetchWeather(lat, lon);
+          }
+        } else {
+          // fallback Stockholm
+          const lat = 59.3293;
+          const lon = 18.0686;
+          const displayName = 'Stockholm';
+          const country = 'Sverige';
+          const input = document.getElementById('city-search');
+          if (input) input.value = displayName;
+          if (typeof window.selectLocation === 'function') {
+            window.selectLocation(lat, lon, displayName, country);
+          } else {
+            fetchWeather(lat, lon);
+          }
+        }
+      })
+      .catch(() => {
+        // fallback Stockholm
+        const lat = 59.3293;
+        const lon = 18.0686;
+        const displayName = 'Stockholm';
+        const country = 'Sverige';
+        const input = document.getElementById('city-search');
+        if (input) input.value = displayName;
+        if (typeof window.selectLocation === 'function') {
+          window.selectLocation(lat, lon, displayName, country);
+        } else {
+          fetchWeather(lat, lon);
+        }
+      });
+  }
+
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((result) => {
+        if (result.state === 'granted') {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              handlePosition(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+              fallbackToIP();
+            },
+            options
+          );
+        } else if (result.state === 'prompt') {
+          // Be om geolocation
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              handlePosition(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+              fallbackToIP();
+            },
+            options
+          );
+        } else {
+          // denied
+          fallbackToIP();
+        }
+      })
+      .catch(() => {
+        // permissions API misslyckas
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            handlePosition(pos.coords.latitude, pos.coords.longitude);
+          },
+          () => {
+            fallbackToIP();
+          },
+          options
+        );
+      });
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        handlePosition(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {
+        fallbackToIP();
+      },
+      options
+    );
+  } else {
+    fallbackToIP();
+  }
+}
+
+// Kör init vid DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAutoLocate);
+} else {
+  initAutoLocate();
+}
+
